@@ -21,12 +21,9 @@ library("tidyverse")
 library("RColorBrewer")
 library("ComplexHeatmap")
 
-
-
 ##Defining the data directory
 data_dir<-"F:/RNA/GSE225620/"
 out_dir <-"F:/RNA/GSE225620/Output/" 
-
 
 ##Pre-processing the data frame for edgeR
 raw_mat<-read.csv("GSE225620/GSE225620_GeneLevel_Raw_data.csv", header=TRUE, row.names = 1)
@@ -42,7 +39,6 @@ if(length(which(duplicated(raw_mat$gene_symbol)))>=1){
 }
 raw_mat<-raw_mat %>% remove_rownames %>% column_to_rownames(var="gene_symbol")
 
-
 ## Read the clinical_data
 clinical_data<- read.csv("GSE225620/SraRunTable.csv", header=TRUE, row.names =1)
 
@@ -50,8 +46,6 @@ clinical_data<- read.csv("GSE225620/SraRunTable.csv", header=TRUE, row.names =1)
 clinical_data <- clinical_data %>% filter(!timepoint %in% "Normal")
 
 table(clinical_data$timepoint)
-
-
 
 ## Take the common sample names match in both clinical and raw expression data
 commonIDs <- intersect(rownames(clinical_data), colnames(raw_mat))
@@ -75,9 +69,9 @@ y <- y[keep,]
 dds <- dds[keep,]
 
 ## Set the 'specimen_type' variable as a factor with defined levels
-# This ensures that 'post-treament' is the first level and 'pre-treament' is the second level in the analysis
+# This ensures that 'pre-treament' is the first level and 'post-treament' is the second level in the analysis
 # Specifying levels helps control the order in which the groups are compared in differential expression analysis
-dds$timepoint <- factor(dds$timepoint, levels = c("post-treament", "pre-treament"))
+dds$timepoint <- factor(dds$timepoint, levels = c("pre-treament", "post-treament"))
 
 ## Run the DESeq2 analysis pipeline on the DESeqDataSet object 'dds'
 # This function performs the differential expression analysis
@@ -109,8 +103,9 @@ resultsNames(dds)
 
 plotDispEsts(dds, main="Dispersion plot")
 
-## Perform variance stabilizing transformation
-res <- results(dds,contrast=c("timepoint","post-treament","pre-treament"))
+### Get results for the specified condition of interest
+res<-results(dds)
+#res <- results(dds,contrast=c("timepoint","post-treament","pre-treament"))
 summary(res)
 
 res <- as_tibble(rownames_to_column(as.data.frame(res), "gene"))
